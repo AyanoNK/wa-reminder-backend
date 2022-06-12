@@ -28,6 +28,7 @@ Mutations — A type of request sent to the server to create/update/delete data/
 Types — The objects that one uses to interact with in GraphQL. These represent the data/records/errors and everything in between.
 Resolver — A function that populates the data for a single field in the schema.
 """
+# https://blog.logrocket.com/using-graphql-strawberry-fastapi-next-js/
 
 
 @strawberry.type
