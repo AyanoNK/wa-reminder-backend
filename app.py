@@ -4,6 +4,8 @@ from fastapi import FastAPI
 from strawberry.fastapi import GraphQLRouter
 from sqlalchemy import select
 
+from strawberry.dataloader import DataLoader
+
 from typing import Optional
 
 import models
@@ -114,6 +116,30 @@ class Mutation:
             await s.commit()
         return Author.marshal(db_author)
 
+
+async def load_books_by_author(keys: list) -> list[Book]:
+    async with models.get_session() as s:
+        all_queries = [select(models.Book).where(
+            models.Book.author_id == key) for key in keys]
+        data = [(await s.execute(sql)).scalars().unique().all() for sql in all_queries]
+        print(keys, data)
+    return data
+
+
+async def load_author_by_book(keys: list) -> list[Book]:
+    async with models.get_session() as s:
+        sql = select(models.Author).where(models.Author.id in keys)
+        data = (await s.execute(sql)).scalars().unique().all()
+    if not data:
+        data.append([])
+    return data
+
+
+async def get_context() -> dict:
+    return {
+        "author_by_book": DataLoader(load_fn=load_author_by_book),
+        "books_by_author": DataLoader(load_fn=load_books_by_author),
+    }
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 
